@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-pageBackground text-textPrimary font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-idbiTeal text-white px-4 py-2 rounded-lg font-medium hover:bg-idbiTealDark transition-colors flex items-center justify-center gap-2 shadow-sm;
+  }
+  
+  .btn-secondary {
+    @apply bg-white border border-border text-textPrimary px-4 py-2 rounded-lg font-medium hover:bg-surfaceMuted transition-colors flex items-center justify-center gap-2 shadow-sm;
+  }
+
+  .card {
+    @apply bg-surface rounded-xl shadow-sm border border-border p-6;
+  }
+
+  .badge {
+    @apply px-2.5 py-0.5 rounded-full text-xs font-medium inline-flex items-center;
+  }
+
+  .badge-success {
+    @apply bg-successLight text-success;
+  }
+
+  .badge-warning {
+    @apply bg-amberLight text-amber;
+  }
+
+  .badge-danger {
+    @apply bg-dangerLight text-danger;
+  }
+
+  .badge-info {
+    @apply bg-informationLight text-information;
+  }
+}

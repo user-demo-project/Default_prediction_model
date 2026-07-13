@@ -1,0 +1,20 @@
+export const modelMetrics = {
+  rocAuc: 0.92,
+  prAuc: 0.71,
+  defaultRecall: 0.89,
+  precision: 0.76,
+  balancedAccuracy: 0.88,
+  f1Score: 0.82,
+  brierScore: 0.09,
+  averageWarningLead: 8.4,
+  populationStabilityIndex: 0.08,
+  calibrationStatus: "Acceptable",
+  modelVersion: "v4.2.1",
+  lastValidationDate: "10 Jul 2026",
+  dataWindow: "Jan 2021 – Jun 2026",
+  driftStatus: "Stable",
+  humanOverrideRate: "14%",
+  falsePositiveReview: "Pending Q3",
+  championModel: "XGBoost-Ensemble-MSME",
+  challengerModel: "LightGBM-Temporal"
+};
