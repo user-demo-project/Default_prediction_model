@@ -1,184 +1,250 @@
-import React, { useEffect, useState } from 'react';
+/**
+ * CustomTour — NIRNAY 365
+ * 100% custom, zero library dependencies.
+ * Works across page navigation cleanly.
+ */
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Joyride, STATUS } from 'react-joyride';
 import { useDemo } from '../../context/DemoContext';
+import { X, ArrowRight, ArrowLeft, SkipForward } from 'lucide-react';
 
-export default function GuidedTour() {
+const STEPS = [
+  { target: null,                         placement: 'center', title: '👋 Welcome to NIRNAY 365',       content: "Let's explore how IDBI predicts and prevents MSME defaults using agentic AI. Click Next to begin.",                                         route: '/portfolio' },
+  { target: '[data-tour="portfolio-overview"]', placement: 'bottom', title: '📊 Portfolio Command Centre',    content: 'Monitor the entire MSME portfolio. "Emerging Stress" accounts are paying on time but showing underlying deterioration.',                route: '/portfolio' },
+  { target: '[data-tour="risk-funnel"]',        placement: 'right',  title: '🔺 Predictive Risk Funnel',     content: 'NIRNAY monitors thousands, identifies deviations, runs autonomous investigations, and escalates only high-risk cases.',             route: '/portfolio' },
+  { target: '[data-tour="shakti-row"]',         placement: 'top',    title: '🚨 High-Priority Case',         content: 'Shakti Auto Components — 12-month PD is 68%, up from 29%. Click Investigate to open its Digital Twin.',                          route: '/portfolio' },
+  { target: '[data-tour="borrower-summary"]',   placement: 'bottom', title: '🏭 Borrower Digital Twin',      content: 'Transactions, GST, operational signals, and documents form a complete borrower picture.',                                          route: '/borrower/MSME-1042' },
+  { target: '[data-tour="receivable-driver"]',  placement: 'bottom', title: '💧 The Liquidity Squeeze',      content: 'Receivable days nearly doubled, pushing working capital to 94%. Electricity usage is stable — still operating.',                   route: '/borrower/MSME-1042' },
+  { target: '[data-tour="stress-movie"]',       placement: 'top',    title: '🎬 The Stress Movie',           content: 'A chronological timeline showing how stress developed — a predictable sequence, not a sudden shock.',                              route: '/borrower/MSME-1042' },
+  { target: '[data-tour="evidence-graph"]',     placement: 'top',    title: '🕸️ Counterparty Contagion',    content: '61% of revenue relies on one buyer severely delaying payments. This is the root cause.',                                           route: '/borrower/MSME-1042' },
+  { target: '[data-tour="ask-nirnay"]',         placement: 'left',   title: '🤖 Ask NIRNAY',                content: 'Chat directly with the AI about this borrower by opening the Ask NIRNAY drawer.',                                                   route: '/borrower/MSME-1042' },
+  { target: null,                               placement: 'center', title: '🔍 Agentic Investigation',      content: "How did NIRNAY find all this? Let's go to the Investigation Room.",                                                                route: '/investigation/MSME-1042' },
+  { target: '[data-tour="investigation-room"]', placement: 'bottom', title: '⚙️ Multi-Agent Workflow',       content: '14 specialised agents autonomously investigate, debate, and compile the evidence.',                                                 route: '/investigation/MSME-1042' },
+  { target: '[data-tour="risk-committee"]',     placement: 'left',   title: '🏛️ AI Risk Committee',         content: 'Agents form a consensus and draft a summary for the human credit officer.',                                                         route: '/investigation/MSME-1042' },
+  { target: '[data-tour="intervention-lab"]',   placement: 'bottom', title: '🧪 Intervention Lab',           content: 'NIRNAY simulates counterfactual scenarios — compare doing nothing vs. providing receivable financing.',                            route: '/interventions/MSME-1042' },
+  { target: '[data-tour="human-decision"]',     placement: 'left',   title: '✅ Human in the Loop',          content: 'The credit officer approves the AI recommendation. The decision is logged to the Audit Trail. Tour complete!',                     route: '/interventions/MSME-1042' },
+];
+
+function getTooltipPosition(targetEl, placement, tooltipEl) {
+  if (!targetEl) return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+
+  const rect = targetEl.getBoundingClientRect();
+  const tw = tooltipEl?.offsetWidth || 340;
+  const th = tooltipEl?.offsetHeight || 180;
+  const gap = 16;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  let top, left;
+
+  switch (placement) {
+    case 'bottom': top = rect.bottom + gap; left = rect.left + rect.width / 2 - tw / 2; break;
+    case 'top':    top = rect.top - th - gap; left = rect.left + rect.width / 2 - tw / 2; break;
+    case 'left':   top = rect.top + rect.height / 2 - th / 2; left = rect.left - tw - gap; break;
+    case 'right':  top = rect.top + rect.height / 2 - th / 2; left = rect.right + gap; break;
+    default:       return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+  }
+
+  // Clamp within viewport
+  top  = Math.max(8, Math.min(top,  vh - th - 8));
+  left = Math.max(8, Math.min(left, vw - tw - 8));
+
+  return { top: `${top}px`, left: `${left}px` };
+}
+
+export default function CustomTour() {
   const { state, dispatch } = useDemo();
   const navigate = useNavigate();
   const location = useLocation();
-  const [key, setKey] = useState(0); // Used to force re-render when route changes during tour
 
-  const steps = [
-    {
-      target: 'body',
-      placement: 'center',
-      title: 'Welcome to NIRNAY 365',
-      content: 'Let\'s explore how IDBI predicts and prevents MSME defaults using agentic AI. Click Next to begin.',
-      disableBeacon: true,
-      route: '/portfolio'
-    },
-    {
-      target: '[data-tour="portfolio-overview"]',
-      placement: 'bottom',
-      title: 'Portfolio Command Centre',
-      content: 'Here, credit officers monitor the entire MSME portfolio. Notice the "Emerging Stress" metric — these are accounts currently paying on time but showing underlying deterioration.',
-      route: '/portfolio'
-    },
-    {
-      target: '[data-tour="risk-funnel"]',
-      placement: 'right',
-      title: 'Predictive Risk Funnel',
-      content: 'NIRNAY acts like a funnel: monitoring thousands, identifying behavioural deviations, running autonomous investigations, and escalating only the high-risk cases for human intervention.',
-      route: '/portfolio'
-    },
-    {
-      target: '[data-tour="shakti-row"]',
-      placement: 'top',
-      title: 'High-Priority Case',
-      content: 'Look at Shakti Auto Components. The 12-month PD is 68%, up from 29%. Let\'s click "Investigate" to open its Digital Twin.',
-      route: '/portfolio',
-      spotlightPadding: 5
-    },
-    {
-      target: '[data-tour="borrower-summary"]',
-      placement: 'bottom',
-      title: 'Borrower Digital Twin',
-      content: 'We are now inside the digital twin. It aggregates transactions, GST, operational signals, and documents to form a complete view of the borrower.',
-      route: '/borrower/MSME-1042'
-    },
-    {
-      target: '[data-tour="receivable-driver"]',
-      placement: 'bottom',
-      title: 'The Liquidity Squeeze',
-      content: 'Notice the primary drivers: Receivable days nearly doubled, pushing working capital utilisation to 94%. Yet, electricity usage remains stable—they are still operating.',
-      route: '/borrower/MSME-1042'
-    },
-    {
-      target: '[data-tour="stress-movie"]',
-      placement: 'top',
-      title: 'The Stress Movie',
-      content: 'This chronological timeline reconstructs exactly how the stress developed, proving this isn\'t a sudden shock but a predictable sequence. Click any event to see the AI agent\'s evidence.',
-      route: '/borrower/MSME-1042'
-    },
-    {
-      target: '[data-tour="evidence-graph"]',
-      placement: 'top',
-      title: 'Counterparty Contagion',
-      content: '(Switch to Counterparties tab) The AI discovered that 61% of revenue relies on one buyer who is severely delaying payments. This is the root cause.',
-      route: '/borrower/MSME-1042' // In a real app we'd simulate the tab click, but we can just highlight the container
-    },
-    {
-      target: '[data-tour="ask-nirnay"]',
-      placement: 'left',
-      title: 'Ask NIRNAY',
-      content: 'If you want to dig deeper, you can chat directly with the AI about this borrower by opening the Ask NIRNAY drawer.',
-      route: '/borrower/MSME-1042'
-    },
-    {
-      target: 'body', // We'll trigger a nav immediately
-      placement: 'center',
-      title: 'Agentic Investigation',
-      content: 'How did NIRNAY find all this out? Let\'s go to the Investigation Room.',
-      route: '/investigation/MSME-1042'
-    },
-    {
-      target: '[data-tour="investigation-room"]',
-      placement: 'bottom',
-      title: 'Multi-Agent Workflow',
-      content: 'When an anomaly is detected, 14 specialised agents (Data Scout, Counterparty Contagion, Evidence Auditor) autonomously investigate, debate, and compile the evidence.',
-      route: '/investigation/MSME-1042'
-    },
-    {
-      target: '[data-tour="risk-committee"]',
-      placement: 'left',
-      title: 'AI Risk Committee',
-      content: 'The agents form a consensus and draft a summary for the human credit officer. The recommendation is to proceed to the Intervention Lab.',
-      route: '/investigation/MSME-1042'
-    },
-    {
-      target: '[data-tour="intervention-lab"]',
-      placement: 'bottom',
-      title: 'Intervention Lab',
-      content: 'Instead of just sending an alert, NIRNAY simulates counterfactual scenarios. Here, we can compare the impact of doing nothing vs. providing receivable financing.',
-      route: '/interventions/MSME-1042'
-    },
-    {
-      target: '[data-tour="human-decision"]',
-      placement: 'left',
-      title: 'Human in the Loop',
-      content: 'The AI recommends Scenario 2. The credit officer reviews the impact and approves it. The decision is logged to the Audit Trail and sent to the Relationship Manager. The tour is now complete!',
-      route: '/interventions/MSME-1042'
-    }
-  ];
+  const [stepIndex, setStepIndex] = useState(0);
+  const [targetRect, setTargetRect] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({});
+  const tooltipRef = useRef(null);
+  const pendingStep = useRef(null);
 
-  const handleJoyrideCallback = (data) => {
-    const { status, type, index, action } = data;
+  const step = STEPS[stepIndex];
+  const isRunning = state.tourRunning;
 
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      dispatch({ type: 'SET_TOUR_STATE', payload: { run: false, stepIndex: 0 } });
-      localStorage.setItem('nirnay-tour-completed', 'true');
-      return;
+  // --- After navigation, resume pending step ---
+  useEffect(() => {
+    if (pendingStep.current !== null) {
+      const idx = pendingStep.current;
+      pendingStep.current = null;
+      // Wait for the new page's DOM to settle
+      setTimeout(() => setStepIndex(idx), 500);
     }
 
-    if (type === 'step:after') {
-      const nextIndex = index + (action === 'prev' ? -1 : 1);
-      const nextStep = steps[nextIndex];
-      
-      if (nextStep) {
-        if (nextStep.route && location.pathname !== nextStep.route.split('?')[0]) {
-          dispatch({ type: 'SET_TOUR_STATE', payload: { run: false, stepIndex: nextIndex } });
-          navigate(nextStep.route);
-          setTimeout(() => {
-            dispatch({ type: 'SET_TOUR_STATE', payload: { run: true, stepIndex: nextIndex } });
-          }, 400);
-        } else {
-          dispatch({ type: 'SET_TOUR_STATE', payload: { run: true, stepIndex: nextIndex } });
-        }
-      }
+    // Also handle sessionStorage start flag (set by LandingPage)
+    const flag = sessionStorage.getItem('nirnay-start-tour');
+    if (flag === 'true') {
+      sessionStorage.removeItem('nirnay-start-tour');
+      setTimeout(() => {
+        dispatch({ type: 'SET_TOUR_STATE', payload: { run: true, stepIndex: 0 } });
+        setStepIndex(0);
+      }, 400);
+    }
+  }, [location.pathname]);
+
+  // --- Position tooltip relative to target element ---
+  useEffect(() => {
+    if (!isRunning || !step) return;
+
+    const update = () => {
+      const el = step.target ? document.querySelector(step.target) : null;
+      setTargetRect(el ? el.getBoundingClientRect() : null);
+      setTooltipPos(getTooltipPosition(el, step.placement, tooltipRef.current));
+    };
+
+    update();
+    const interval = setInterval(update, 200); // keep in sync with scrolling/resizing
+    return () => clearInterval(interval);
+  }, [isRunning, stepIndex, step]);
+
+  // --- Sync stepIndex from global state ---
+  useEffect(() => {
+    if (isRunning) setStepIndex(state.tourStepIndex ?? 0);
+  }, [state.tourRunning]);
+
+  const goTo = (idx) => {
+    if (idx < 0 || idx >= STEPS.length) return endTour();
+    const next = STEPS[idx];
+    const nextRoute = next.route?.split('?')[0];
+
+    dispatch({ type: 'SET_TOUR_STATE', payload: { run: true, stepIndex: idx } });
+
+    if (nextRoute && nextRoute !== location.pathname) {
+      pendingStep.current = idx;
+      navigate(nextRoute);
+    } else {
+      setStepIndex(idx);
     }
   };
 
-  if (!state.tourRunning) return null;
+  const endTour = () => {
+    dispatch({ type: 'SET_TOUR_STATE', payload: { run: false, stepIndex: 0 } });
+    localStorage.setItem('nirnay-tour-completed', 'true');
+  };
+
+  if (!isRunning || !step) return null;
+
+  const isCenter = !step.target || step.placement === 'center';
+  const isFirst = stepIndex === 0;
+  const isLast = stepIndex === STEPS.length - 1;
 
   return (
-    <Joyride
-      key={key}
-      steps={steps}
-      stepIndex={state.tourStepIndex}
-      run={state.tourRunning}
-      callback={handleJoyrideCallback}
-      continuous
-      showProgress
-      showSkipButton
-      styles={{
-        options: {
-          primaryColor: '#00836C',
-          textColor: '#162522',
-          backgroundColor: '#FFFFFF',
-          overlayColor: 'rgba(0, 0, 0, 0.6)',
-          zIndex: 1000,
-        },
-        tooltip: {
-          borderRadius: '12px',
-          padding: '24px'
-        },
-        buttonNext: {
-          borderRadius: '8px',
-          fontWeight: 600,
-          padding: '10px 16px'
-        },
-        buttonBack: {
-          marginRight: '10px'
-        },
-        buttonSkip: {
-          color: '#5B6B67'
-        }
-      }}
-      locale={{
-        last: 'Finish Tour',
-        skip: 'Skip Tour'
-      }}
-    />
+    <>
+      {/* Dark overlay */}
+      <div
+        style={{
+          position: 'fixed', inset: 0, zIndex: 9998,
+          background: 'rgba(0,0,0,0.55)',
+          pointerEvents: isCenter ? 'auto' : 'none',
+        }}
+        onClick={isCenter ? undefined : undefined}
+      />
+
+      {/* Spotlight cutout for target element */}
+      {targetRect && !isCenter && (
+        <div style={{
+          position: 'fixed',
+          top: targetRect.top - 6,
+          left: targetRect.left - 6,
+          width: targetRect.width + 12,
+          height: targetRect.height + 12,
+          zIndex: 9999,
+          borderRadius: 8,
+          boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
+          pointerEvents: 'none',
+          border: '2px solid #00836C',
+        }} />
+      )}
+
+      {/* Tooltip */}
+      <div
+        ref={tooltipRef}
+        style={{
+          position: 'fixed',
+          zIndex: 10000,
+          width: 340,
+          background: '#fff',
+          borderRadius: 14,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+          padding: '24px',
+          fontFamily: 'inherit',
+          ...tooltipPos,
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: '#162522', lineHeight: 1.4, flex: 1 }}>
+            {step.title}
+          </div>
+          <button
+            onClick={endTour}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#5B6B67', marginLeft: 8, flexShrink: 0 }}
+            title="Close tour"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <p style={{ fontSize: 13.5, color: '#3D5450', lineHeight: 1.6, margin: '0 0 20px 0' }}>
+          {step.content}
+        </p>
+
+        {/* Progress dots */}
+        <div style={{ display: 'flex', gap: 5, marginBottom: 16 }}>
+          {STEPS.map((_, i) => (
+            <div key={i} style={{
+              width: i === stepIndex ? 18 : 6, height: 6,
+              borderRadius: 3,
+              background: i === stepIndex ? '#00836C' : i < stepIndex ? '#81908C' : '#E0E8E6',
+              transition: 'all 0.3s ease',
+            }} />
+          ))}
+        </div>
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button
+            onClick={endTour}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#5B6B67', display: 'flex', alignItems: 'center', gap: 4 }}
+          >
+            <SkipForward size={13} /> Skip Tour
+          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {!isFirst && (
+              <button
+                onClick={() => goTo(stepIndex - 1)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 14px', borderRadius: 8, border: '1px solid #d0dbd9',
+                  background: '#fff', color: '#162522', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                }}
+              >
+                <ArrowLeft size={14} /> Back
+              </button>
+            )}
+            <button
+              onClick={() => isLast ? endTour() : goTo(stepIndex + 1)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '8px 18px', borderRadius: 8, border: 'none',
+                background: '#00836C', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+              }}
+            >
+              {isLast ? 'Finish ✓' : <>Next <ArrowRight size={14} /></>}
+            </button>
+          </div>
+        </div>
+
+        {/* Step counter */}
+        <div style={{ textAlign: 'center', fontSize: 11, color: '#81908C', marginTop: 12 }}>
+          Step {stepIndex + 1} of {STEPS.length}
+        </div>
+      </div>
+    </>
   );
 }

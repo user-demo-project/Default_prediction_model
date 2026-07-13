@@ -8,7 +8,9 @@ export default function LandingPage() {
   const { dispatch } = useDemo();
 
   const startTour = () => {
-    dispatch({ type: 'SET_TOUR_STATE', payload: { run: true, stepIndex: 0 } });
+    // Navigate first, then let GuidedTour start once the page is rendered
+    // We use a small flag in sessionStorage so GuidedTour can pick it up after mount
+    sessionStorage.setItem('nirnay-start-tour', 'true');
     navigate('/portfolio');
   };
 
