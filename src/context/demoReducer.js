@@ -1,8 +1,8 @@
 export const initialState = {
   tourRunning: false,
   tourStepIndex: 0,
-  groqKeyPresent: false,
-  groqMode: 'demo',
+  groqKeyPresent: true,
+  groqMode: 'Live Groq',
   groqModel: 'llama-3.3-70b-versatile',
   chatMessages: [],
   selectedBorrowerId: 'MSME-1042',

@@ -73,7 +73,7 @@ export default function BorrowersPage() {
                   <td className="py-3 px-4">
                     <button 
                       onClick={() => navigate(`/borrower/${b.id}`)}
-                      className="text-idbiTeal font-medium hover:underline flex items-center gap-1"
+                      className="btn-primary py-1.5 px-4 text-xs flex items-center justify-center gap-1 w-24"
                     >
                       View <ArrowRight size={14}/>
                     </button>

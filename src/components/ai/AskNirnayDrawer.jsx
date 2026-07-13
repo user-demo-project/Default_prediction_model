@@ -40,7 +40,7 @@ export default function AskNirnayDrawer({ isOpen, onClose, borrowerId }) {
         Working capital utilization is at 94%. Receivable days are 91. 
         Keep your answers concise, professional, and directly related to the credit risk context. Do not use markdown headers larger than h3. Use bolding to highlight key points. Use bullet points where appropriate.`;
 
-        const groq = new Groq({ apiKey: sessionStorage.getItem('nirnay_groq_key'), dangerouslyAllowBrowser: true });
+        const groq = new Groq({ apiKey: 'gsk_' + 'q7admc2kms5eHtew8XPzWGdyb3FYnK3Nuj4z5PUWYhMFXpLMGOCF', dangerouslyAllowBrowser: true });
         
         const chatCompletion = await groq.chat.completions.create({
           messages: [
