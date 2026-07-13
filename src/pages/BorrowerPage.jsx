@@ -47,14 +47,14 @@ export default function BorrowerPage() {
         <div className="flex gap-3">
           <button 
             onClick={() => setIsChatOpen(!isChatOpen)}
-            className="btn-secondary text-idbiTeal border-idbiTeal hover:bg-idbiTealLight"
+            className="btn-secondary btn-attention text-idbiTeal border-idbiTeal hover:bg-idbiTealLight"
             data-tour="ask-nirnay"
           >
             Ask NIRNAY
           </button>
           <button 
             onClick={() => navigate(`/investigation/${borrower.id}`)}
-            className="btn-primary"
+            className="btn-primary btn-attention"
           >
             View Agentic Investigation
           </button>
